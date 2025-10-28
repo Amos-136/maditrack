@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          medecin_id: string
+          notes: string | null
+          organization_id: string
+          patient_id: string
+          status: Database["public"]["Enums"]["appointment_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          id?: string
+          medecin_id: string
+          notes?: string | null
+          organization_id: string
+          patient_id: string
+          status?: Database["public"]["Enums"]["appointment_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          medecin_id?: string
+          notes?: string | null
+          organization_id?: string
+          patient_id?: string
+          status?: Database["public"]["Enums"]["appointment_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_conversations: {
         Row: {
           created_at: string
@@ -118,6 +169,95 @@ export type Database = {
         }
         Relationships: []
       }
+      organizations: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          phone: string | null
+          type: Database["public"]["Enums"]["organization_type"]
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          phone?: string | null
+          type: Database["public"]["Enums"]["organization_type"]
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          phone?: string | null
+          type?: Database["public"]["Enums"]["organization_type"]
+        }
+        Relationships: []
+      }
+      patients: {
+        Row: {
+          age: number | null
+          antecedents: string | null
+          created_at: string | null
+          created_by: string | null
+          email: string | null
+          full_name: string
+          gender: Database["public"]["Enums"]["gender_type"] | null
+          id: string
+          medecin_id: string | null
+          organization_id: string
+          phone: string | null
+          traitement: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          age?: number | null
+          antecedents?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email?: string | null
+          full_name: string
+          gender?: Database["public"]["Enums"]["gender_type"] | null
+          id?: string
+          medecin_id?: string | null
+          organization_id: string
+          phone?: string | null
+          traitement?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          age?: number | null
+          antecedents?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email?: string | null
+          full_name?: string
+          gender?: Database["public"]["Enums"]["gender_type"] | null
+          id?: string
+          medecin_id?: string | null
+          organization_id?: string
+          phone?: string | null
+          traitement?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patients_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prayer_intentions: {
         Row: {
           created_at: string
@@ -147,6 +287,47 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          organization_id: string
+          service: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email: string
+          full_name: string
+          id: string
+          organization_id: string
+          service?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          organization_id?: string
+          service?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       programs: {
         Row: {
@@ -186,6 +367,88 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      staff_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          organization_id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          organization_id: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          organization_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          created_at: string | null
+          end_date: string | null
+          id: string
+          organization_id: string
+          paystack_customer_id: string | null
+          paystack_subscription_code: string | null
+          plan: Database["public"]["Enums"]["subscription_plan"]
+          start_date: string | null
+          status: Database["public"]["Enums"]["subscription_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          organization_id: string
+          paystack_customer_id?: string | null
+          paystack_subscription_code?: string | null
+          plan: Database["public"]["Enums"]["subscription_plan"]
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["subscription_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          organization_id?: string
+          paystack_customer_id?: string | null
+          paystack_subscription_code?: string | null
+          plan?: Database["public"]["Enums"]["subscription_plan"]
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["subscription_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       testimonials: {
         Row: {
@@ -261,6 +524,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_organization_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -269,9 +533,26 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_user_admin: { Args: { _user_id: string }; Returns: boolean }
+      same_organization: {
+        Args: { _user_id1: string; _user_id2: string }
+        Returns: boolean
+      }
+      user_has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      appointment_status: "planifie" | "en_cours" | "termine" | "annule"
+      gender_type: "Homme" | "Femme" | "Autre"
+      organization_type: "hopital_public" | "clinique_privee" | "centre_sante"
+      subscription_plan: "basic" | "pro" | "clinic"
+      subscription_status: "actif" | "expire" | "suspendu"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -400,6 +681,11 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      appointment_status: ["planifie", "en_cours", "termine", "annule"],
+      gender_type: ["Homme", "Femme", "Autre"],
+      organization_type: ["hopital_public", "clinique_privee", "centre_sante"],
+      subscription_plan: ["basic", "pro", "clinic"],
+      subscription_status: ["actif", "expire", "suspendu"],
     },
   },
 } as const
