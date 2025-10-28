@@ -10,7 +10,7 @@ export const Header = () => {
   const initials = user ? `${user.firstName[0]}${user.lastName[0]}` : 'AD';
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60 shadow-sm animate-fade-in">
       <div className="flex h-16 items-center gap-4 px-4 lg:px-8">
         <div className="flex flex-1 items-center gap-4">
           <div className="relative w-full max-w-sm">

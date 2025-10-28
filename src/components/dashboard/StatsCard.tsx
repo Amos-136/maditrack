@@ -15,7 +15,7 @@ interface StatsCardProps {
 
 export const StatsCard = ({ title, value, icon: Icon, trend, className }: StatsCardProps) => {
   return (
-    <Card className={cn('overflow-hidden transition-all hover:shadow-lg', className)}>
+    <Card className={cn('overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 animate-scale-in', className)}>
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
