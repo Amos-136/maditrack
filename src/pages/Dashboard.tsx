@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { NewPatientDialog } from '@/components/dialogs/NewPatientDialog';
+import { NewAppointmentDialog } from '@/components/dialogs/NewAppointmentDialog';
+import { NewStaffDialog } from '@/components/dialogs/NewStaffDialog';
 
 interface Patient {
   id: string;
@@ -28,6 +31,9 @@ const Dashboard = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [patientDialogOpen, setPatientDialogOpen] = useState(false);
+  const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
+  const [staffDialogOpen, setStaffDialogOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const today = new Date().toISOString().split('T')[0];
@@ -77,15 +83,15 @@ const Dashboard = () => {
           <p className="text-muted-foreground mt-1">Vue d'ensemble de votre établissement</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => navigate('/patients')} className="gap-2">
+          <Button onClick={() => setPatientDialogOpen(true)} className="gap-2">
             <UserPlus className="h-4 w-4" />
             Nouveau patient
           </Button>
-          <Button onClick={() => navigate('/appointments')} className="gap-2">
+          <Button onClick={() => setAppointmentDialogOpen(true)} className="gap-2">
             <CalendarPlus className="h-4 w-4" />
             Nouveau rendez-vous
           </Button>
-          <Button onClick={() => navigate('/staff')} className="gap-2">
+          <Button onClick={() => setStaffDialogOpen(true)} className="gap-2">
             <UserCog className="h-4 w-4" />
             Ajouter un membre
           </Button>
@@ -177,6 +183,22 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      <NewPatientDialog
+        open={patientDialogOpen}
+        onOpenChange={setPatientDialogOpen}
+        onSuccess={loadDashboardData}
+      />
+      <NewAppointmentDialog
+        open={appointmentDialogOpen}
+        onOpenChange={setAppointmentDialogOpen}
+        onSuccess={loadDashboardData}
+      />
+      <NewStaffDialog
+        open={staffDialogOpen}
+        onOpenChange={setStaffDialogOpen}
+        onSuccess={loadDashboardData}
+      />
     </div>
   );
 };

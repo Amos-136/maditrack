@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { NewPatientDialog } from '@/components/dialogs/NewPatientDialog';
 
 interface Patient {
   id: string;
@@ -21,6 +22,7 @@ const Patients = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -67,7 +69,10 @@ const Patients = () => {
           <h1 className="text-3xl font-bold tracking-tight">Patients</h1>
           <p className="text-muted-foreground mt-1">Gérez vos patients</p>
         </div>
-        <Button className="bg-gradient-to-r from-primary to-primary-glow">
+        <Button 
+          className="bg-gradient-to-r from-primary to-primary-glow"
+          onClick={() => setDialogOpen(true)}
+        >
           <Plus className="h-4 w-4 mr-2" />
           Nouveau patient
         </Button>
@@ -134,6 +139,12 @@ const Patients = () => {
           <p className="text-muted-foreground">Aucun patient trouvé</p>
         </div>
       )}
+
+      <NewPatientDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSuccess={loadPatients}
+      />
     </div>
   );
 };

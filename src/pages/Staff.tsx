@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { NewStaffDialog } from '@/components/dialogs/NewStaffDialog';
 
 interface StaffMember {
   id: string;
@@ -27,6 +28,7 @@ const getRoleBadge = (role: string) => {
 const Staff = () => {
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -81,7 +83,10 @@ const Staff = () => {
           <h1 className="text-3xl font-bold tracking-tight">Personnel</h1>
           <p className="text-muted-foreground mt-1">Gérez votre équipe médicale</p>
         </div>
-        <Button className="bg-gradient-to-r from-primary to-primary-glow">
+        <Button 
+          className="bg-gradient-to-r from-primary to-primary-glow"
+          onClick={() => setDialogOpen(true)}
+        >
           <Plus className="h-4 w-4 mr-2" />
           Ajouter un membre
         </Button>
@@ -124,6 +129,12 @@ const Staff = () => {
           );
         })}
       </div>
+
+      <NewStaffDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSuccess={loadStaff}
+      />
     </div>
   );
 };
