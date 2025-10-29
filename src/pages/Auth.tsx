@@ -39,7 +39,14 @@ const Auth = () => {
         .select()
         .single();
 
-      if (orgError) throw orgError;
+      if (orgError) {
+        console.error('Erreur création organisation:', orgError);
+        throw new Error(`Impossible de créer l'organisation: ${orgError.message}`);
+      }
+
+      if (!orgData?.id) {
+        throw new Error('L\'organisation a été créée mais aucun ID n\'a été retourné');
+      }
 
       // Then sign up the user with organization_id in metadata
       // The handle_new_user trigger will create the profile with this organization_id
@@ -55,11 +62,17 @@ const Auth = () => {
         }
       });
 
-      if (error) throw error;
-      if (!data.user) throw new Error('Erreur lors de la création du compte');
+      if (error) {
+        console.error('Erreur création utilisateur:', error);
+        throw new Error(`Impossible de créer le compte: ${error.message}`);
+      }
+      
+      if (!data.user) {
+        throw new Error('Erreur lors de la création du compte: aucun utilisateur retourné');
+      }
 
-      // Wait a moment for the trigger to complete
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Wait for the trigger to complete and create the profile
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       // Assign admin role to the first user
       const { error: roleError } = await supabase
@@ -69,7 +82,10 @@ const Auth = () => {
           role: 'admin'
         });
 
-      if (roleError) throw roleError;
+      if (roleError) {
+        console.error('Erreur attribution rôle admin:', roleError);
+        throw new Error(`Compte créé mais impossible d'attribuer le rôle admin: ${roleError.message}`);
+      }
 
       toast({
         title: 'Compte créé !',

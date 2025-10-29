@@ -55,21 +55,36 @@ export const Sidebar = () => {
 
   useEffect(() => {
     const fetchOrganizationCategory = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('organization_id')
+          .eq('id', user.id)
+          .single();
 
-      if (profile?.organization_id) {
-        const { data: org } = await supabase
+        if (profileError) {
+          console.error('Erreur lors de la récupération du profil:', profileError);
+          return;
+        }
+
+        if (!profile?.organization_id) {
+          console.warn('Aucun organization_id trouvé pour cet utilisateur');
+          return;
+        }
+
+        const { data: org, error: orgError } = await supabase
           .from('organizations')
           .select('category')
           .eq('id', profile.organization_id)
           .single();
+
+        if (orgError) {
+          console.error('Erreur lors de la récupération de l\'organisation:', orgError);
+          return;
+        }
 
         if (org?.category) {
           setOrganizationCategory(org.category);
@@ -83,6 +98,8 @@ export const Sidebar = () => {
             setNavigation(individualNavigation);
           }
         }
+      } catch (error) {
+        console.error('Erreur inattendue:', error);
       }
     };
 

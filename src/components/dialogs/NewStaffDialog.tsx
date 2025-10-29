@@ -66,14 +66,18 @@ export function NewStaffDialog({ open, onOpenChange, onSuccess }: NewStaffDialog
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Utilisateur non connecté');
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('organization_id')
         .eq('id', user.id)
         .single();
 
+      if (profileError) {
+        throw new Error('Erreur lors de la récupération de votre profil: ' + profileError.message);
+      }
+
       if (!profile?.organization_id) {
-        throw new Error('Organization non trouvée');
+        throw new Error('⚠️ Vous n\'êtes rattaché à aucune organisation. Veuillez contacter votre administrateur ou créer une nouvelle organisation.');
       }
 
       // Créer le compte utilisateur
