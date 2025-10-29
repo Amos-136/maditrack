@@ -28,7 +28,22 @@ const Auth = () => {
     const organizationName = formData.get('organization-name') as string;
 
     try {
-      // First, create the organization
+      // First, sign up the user
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            full_name: fullName
+          }
+        }
+      });
+
+      if (error) throw error;
+      if (!data.user) throw new Error('Erreur lors de la création du compte');
+
+      // Then create the organization with the user's ID
       const { data: orgData, error: orgError } = await supabase
         .from('organizations')
         .insert({
@@ -41,32 +56,23 @@ const Auth = () => {
 
       if (orgError) throw orgError;
 
-      // Then sign up the user with organization_id in metadata
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            full_name: fullName,
-            organization_id: orgData.id
-          }
-        }
-      });
+      // Update user profile with organization_id
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ organization_id: orgData.id })
+        .eq('id', data.user.id);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
 
       // Assign admin role to the first user
-      if (data.user) {
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: data.user.id,
-            role: 'admin'
-          });
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: data.user.id,
+          role: 'admin'
+        });
 
-        if (roleError) throw roleError;
-      }
+      if (roleError) throw roleError;
 
       toast({
         title: 'Compte créé !',
