@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Building2 } from 'lucide-react';
 
@@ -13,6 +14,8 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const [organizationCategory, setOrganizationCategory] = useState('hopital');
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -30,8 +33,9 @@ const Auth = () => {
         .from('organizations')
         .insert({
           name: organizationName,
-          type: 'clinique_privee'
-        })
+          type: 'clinique_privee',
+          category: organizationCategory as any
+        } as any)
         .select()
         .single();
 
@@ -182,6 +186,20 @@ const Auth = () => {
                     placeholder="Clinique Santé Plus"
                     required
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="organization-category">Type d'entité</Label>
+                  <Select value={organizationCategory} onValueChange={setOrganizationCategory}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionnez un type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="hopital">Hôpital</SelectItem>
+                      <SelectItem value="clinique">Clinique</SelectItem>
+                      <SelectItem value="pharmacie">Pharmacie</SelectItem>
+                      <SelectItem value="particulier">Particulier</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>

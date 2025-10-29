@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   Users, 
@@ -7,21 +8,86 @@ import {
   UserCog, 
   Bot, 
   Settings,
-  Activity
+  Activity,
+  Package,
+  ShoppingCart,
+  TrendingUp,
+  FileText,
+  History,
+  Wallet
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
-const navigation = [
+// Navigation pour hôpitaux et cliniques
+const medicalNavigation = [
   { name: 'Tableau de bord', href: '/', icon: LayoutDashboard },
   { name: 'Patients', href: '/patients', icon: Users },
   { name: 'Rendez-vous', href: '/appointments', icon: Calendar },
-  { name: 'Abonnements', href: '/subscriptions', icon: CreditCard },
   { name: 'Personnel', href: '/staff', icon: UserCog },
+  { name: 'Abonnements', href: '/subscriptions', icon: CreditCard },
   { name: 'Assistant IA', href: '/assistant', icon: Bot },
   { name: 'Paramètres', href: '/settings', icon: Settings },
 ];
 
+// Navigation pour pharmacies
+const pharmacyNavigation = [
+  { name: 'Tableau de bord', href: '/', icon: LayoutDashboard },
+  { name: 'Stock', href: '/stock', icon: Package },
+  { name: 'Commandes', href: '/orders', icon: ShoppingCart },
+  { name: 'Ventes', href: '/sales', icon: TrendingUp },
+  { name: 'Abonnements', href: '/subscriptions', icon: CreditCard },
+  { name: 'Paramètres', href: '/settings', icon: Settings },
+];
+
+// Navigation pour particuliers
+const individualNavigation = [
+  { name: 'Tableau de bord', href: '/', icon: LayoutDashboard },
+  { name: 'Mes ordonnances', href: '/prescriptions', icon: FileText },
+  { name: 'Historique médical', href: '/medical-history', icon: History },
+  { name: 'Paiements', href: '/payments', icon: Wallet },
+  { name: 'Paramètres', href: '/settings', icon: Settings },
+];
+
 export const Sidebar = () => {
+  const [navigation, setNavigation] = useState(medicalNavigation);
+  const [organizationCategory, setOrganizationCategory] = useState<string>('hopital');
+
+  useEffect(() => {
+    const fetchOrganizationCategory = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.organization_id) {
+        const { data: org } = await supabase
+          .from('organizations')
+          .select('category')
+          .eq('id', profile.organization_id)
+          .single();
+
+        if (org?.category) {
+          setOrganizationCategory(org.category);
+          
+          // Définir la navigation selon la catégorie
+          if (org.category === 'hopital' || org.category === 'clinique') {
+            setNavigation(medicalNavigation);
+          } else if (org.category === 'pharmacie') {
+            setNavigation(pharmacyNavigation);
+          } else if (org.category === 'particulier') {
+            setNavigation(individualNavigation);
+          }
+        }
+      }
+    };
+
+    fetchOrganizationCategory();
+  }, []);
   return (
     <aside className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col border-r border-border bg-card shadow-lg animate-slide-in-right">
       <div className="flex flex-col flex-grow pt-5 overflow-y-auto">

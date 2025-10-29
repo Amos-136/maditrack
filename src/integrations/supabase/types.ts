@@ -172,6 +172,7 @@ export type Database = {
       organizations: {
         Row: {
           address: string | null
+          category: Database["public"]["Enums"]["organization_category"] | null
           created_at: string | null
           email: string | null
           id: string
@@ -182,6 +183,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          category?: Database["public"]["Enums"]["organization_category"] | null
           created_at?: string | null
           email?: string | null
           id?: string
@@ -192,6 +194,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          category?: Database["public"]["Enums"]["organization_category"] | null
           created_at?: string | null
           email?: string | null
           id?: string
@@ -550,6 +553,11 @@ export type Database = {
       app_role: "admin" | "moderator" | "user"
       appointment_status: "planifie" | "en_cours" | "termine" | "annule"
       gender_type: "Homme" | "Femme" | "Autre"
+      organization_category:
+        | "hopital"
+        | "clinique"
+        | "pharmacie"
+        | "particulier"
       organization_type: "hopital_public" | "clinique_privee" | "centre_sante"
       subscription_plan: "basic" | "pro" | "clinic"
       subscription_status: "actif" | "expire" | "suspendu"
@@ -683,6 +691,12 @@ export const Constants = {
       app_role: ["admin", "moderator", "user"],
       appointment_status: ["planifie", "en_cours", "termine", "annule"],
       gender_type: ["Homme", "Femme", "Autre"],
+      organization_category: [
+        "hopital",
+        "clinique",
+        "pharmacie",
+        "particulier",
+      ],
       organization_type: ["hopital_public", "clinique_privee", "centre_sante"],
       subscription_plan: ["basic", "pro", "clinic"],
       subscription_status: ["actif", "expire", "suspendu"],
