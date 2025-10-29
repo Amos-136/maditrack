@@ -295,7 +295,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
-          organization_id: string
+          organization_id: string | null
           service: string | null
           updated_at: string | null
         }
@@ -305,7 +305,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
-          organization_id: string
+          organization_id?: string | null
           service?: string | null
           updated_at?: string | null
         }
@@ -315,7 +315,7 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
-          organization_id?: string
+          organization_id?: string | null
           service?: string | null
           updated_at?: string | null
         }
