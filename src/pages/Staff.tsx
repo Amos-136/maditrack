@@ -1,42 +1,18 @@
+import { useEffect, useState } from 'react';
 import { Plus, UserCog } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
-const staff = [
-  {
-    id: '1',
-    name: 'Dr. Marie Dubois',
-    role: 'admin',
-    service: 'Direction',
-    email: 'marie.dubois@meditrack.ai',
-    phone: '+33 6 12 34 56 78',
-  },
-  {
-    id: '2',
-    name: 'Dr. Pierre Martin',
-    role: 'medecin',
-    service: 'Cardiologie',
-    email: 'pierre.martin@meditrack.ai',
-    phone: '+33 6 23 45 67 89',
-  },
-  {
-    id: '3',
-    name: 'Sophie Bernard',
-    role: 'infirmier',
-    service: 'Urgences',
-    email: 'sophie.bernard@meditrack.ai',
-    phone: '+33 6 34 56 78 90',
-  },
-  {
-    id: '4',
-    name: 'Julie Petit',
-    role: 'secretaire',
-    service: 'Accueil',
-    email: 'julie.petit@meditrack.ai',
-    phone: '+33 6 45 67 89 01',
-  },
-];
+interface StaffMember {
+  id: string;
+  full_name: string;
+  email: string;
+  service?: string;
+  role?: string;
+}
 
 const getRoleBadge = (role: string) => {
   const variants = {
@@ -49,6 +25,55 @@ const getRoleBadge = (role: string) => {
 };
 
 const Staff = () => {
+  const [staff, setStaff] = useState<StaffMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    loadStaff();
+  }, []);
+
+  const loadStaff = async () => {
+    try {
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, service')
+        .order('created_at', { ascending: false });
+
+      if (profilesError) throw profilesError;
+
+      // Charger les rôles séparément
+      const { data: roles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
+
+      if (rolesError) throw rolesError;
+
+      // Combiner les données
+      const staffWithRoles = profiles?.map(profile => ({
+        ...profile,
+        role: roles?.find(r => r.user_id === profile.id)?.role
+      })) || [];
+
+      setStaff(staffWithRoles);
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
   return (
     <div className="space-y-6 animate-in fade-in-50 duration-500">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -63,41 +88,41 @@ const Staff = () => {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {staff.map((member) => (
-          <Card key={member.id} className="hover:shadow-lg transition-all">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-secondary/20 to-secondary/10 flex items-center justify-center">
-                  <UserCog className="h-6 w-6 text-secondary" />
+        {staff.map((member) => {
+          const role = member.role || 'user';
+          return (
+            <Card key={member.id} className="hover:shadow-lg transition-all">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="h-12 w-12 rounded-full bg-gradient-to-br from-secondary/20 to-secondary/10 flex items-center justify-center">
+                    <UserCog className="h-6 w-6 text-secondary" />
+                  </div>
+                  <Badge variant={getRoleBadge(role) as any} className="capitalize">
+                    {role}
+                  </Badge>
                 </div>
-                <Badge variant={getRoleBadge(member.role) as any} className="capitalize">
-                  {member.role}
-                </Badge>
-              </div>
-              
-              <h3 className="font-semibold text-lg mb-1">{member.name}</h3>
-              <p className="text-sm text-muted-foreground mb-4">{member.service}</p>
-              
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p className="flex items-center gap-2">
-                  ✉️ {member.email}
-                </p>
-                <p className="flex items-center gap-2">
-                  📞 {member.phone}
-                </p>
-              </div>
-              
-              <div className="mt-4 pt-4 border-t border-border flex gap-2">
-                <Button variant="ghost" size="sm" className="flex-1">
-                  Modifier
-                </Button>
-                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                  Retirer
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                
+                <h3 className="font-semibold text-lg mb-1">{member.full_name}</h3>
+                <p className="text-sm text-muted-foreground mb-4">{member.service || 'Service non renseigné'}</p>
+                
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <p className="flex items-center gap-2">
+                    ✉️ {member.email}
+                  </p>
+                </div>
+                
+                <div className="mt-4 pt-4 border-t border-border flex gap-2">
+                  <Button variant="ghost" size="sm" className="flex-1">
+                    Modifier
+                  </Button>
+                  <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                    Retirer
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );

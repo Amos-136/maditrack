@@ -1,7 +1,11 @@
+import { useEffect, useState } from 'react';
 import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 const plans = [
   {
@@ -49,8 +53,67 @@ const plans = [
 ];
 
 const Subscriptions = () => {
+  const [currentSubscription, setCurrentSubscription] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    loadSubscription();
+  }, []);
+
+  const loadSubscription = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      setCurrentSubscription(data);
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-in fade-in-50 duration-500">
+      {currentSubscription && (
+        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold mb-1">Abonnement actuel</h3>
+                <p className="text-sm text-muted-foreground">
+                  Plan: <span className="font-medium capitalize">{currentSubscription.plan}</span>
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Statut: <Badge variant={currentSubscription.status === 'actif' ? 'default' : 'secondary'} className="ml-2">
+                    {currentSubscription.status}
+                  </Badge>
+                </p>
+              </div>
+              <Button variant="outline">Gérer l'abonnement</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       <div className="text-center max-w-3xl mx-auto">
         <h1 className="text-4xl font-bold tracking-tight mb-3">
           Choisissez votre plan

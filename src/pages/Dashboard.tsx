@@ -1,14 +1,70 @@
+import { useEffect, useState } from 'react';
 import { Users, Calendar, Activity, TrendingUp } from 'lucide-react';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { storage } from '@/lib/storage';
-import type { Patient, Appointment } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
+interface Patient {
+  id: string;
+  full_name: string;
+  age?: number;
+  gender?: string;
+  phone?: string;
+}
+
+interface Appointment {
+  id: string;
+  patient_id: string;
+  date: string;
+  status: string;
+  notes?: string;
+  patients?: Patient;
+}
 
 const Dashboard = () => {
-  const patients = storage.get<Patient[]>('patients') || [];
-  const appointments = storage.get<Appointment[]>('appointments') || [];
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
   const today = new Date().toISOString().split('T')[0];
-  const todayAppointments = appointments.filter(app => app.date === today);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      const [patientsResult, appointmentsResult] = await Promise.all([
+        supabase.from('patients').select('id, full_name, age, gender, phone'),
+        supabase.from('appointments').select('id, patient_id, date, status, notes, patients(id, full_name)')
+      ]);
+
+      if (patientsResult.error) throw patientsResult.error;
+      if (appointmentsResult.error) throw appointmentsResult.error;
+
+      setPatients(patientsResult.data || []);
+      setAppointments(appointmentsResult.data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const todayAppointments = appointments.filter(app => app.date.startsWith(today));
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in-50 duration-500">
@@ -55,21 +111,17 @@ const Dashboard = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {todayAppointments.map((appointment) => {
-                  const patient = patients.find(p => p.id === appointment.patientId);
-                  return (
-                    <div key={appointment.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-                      <div>
-                        <p className="font-medium">{patient?.firstName} {patient?.lastName}</p>
-                        <p className="text-sm text-muted-foreground">{appointment.motif}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium text-primary">{appointment.time}</p>
-                        <p className="text-xs text-muted-foreground capitalize">{appointment.status}</p>
-                      </div>
+                {todayAppointments.map((appointment) => (
+                  <div key={appointment.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                    <div>
+                      <p className="font-medium">{appointment.patients?.full_name || 'Patient inconnu'}</p>
+                      <p className="text-sm text-muted-foreground">{appointment.notes || 'Pas de notes'}</p>
                     </div>
-                  );
-                })}
+                    <div className="text-right">
+                      <p className="text-xs text-muted-foreground capitalize">{appointment.status}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </CardContent>
@@ -81,17 +133,23 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {patients.slice(0, 5).map((patient) => (
-                <div key={patient.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-secondary/20 to-secondary/10 flex items-center justify-center">
-                    <span className="text-sm font-medium">{patient.firstName[0]}{patient.lastName[0]}</span>
+              {patients.slice(0, 5).map((patient) => {
+                const initials = patient.full_name.split(' ').map(n => n[0]).join('').slice(0, 2);
+                return (
+                  <div key={patient.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-secondary/20 to-secondary/10 flex items-center justify-center">
+                      <span className="text-sm font-medium">{initials}</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{patient.full_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {patient.age ? `${patient.age} ans` : 'Âge non renseigné'}
+                        {patient.gender && ` · ${patient.gender}`}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{patient.firstName} {patient.lastName}</p>
-                    <p className="text-xs text-muted-foreground">{patient.age} ans · {patient.gender}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
