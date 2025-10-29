@@ -9,6 +9,45 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Building2 } from 'lucide-react';
+import { z } from 'zod';
+
+// Server-side input validation schema
+const signupSchema = z.object({
+  fullName: z.string()
+    .trim()
+    .min(2, 'Le nom doit contenir au moins 2 caractères')
+    .max(100, 'Le nom ne peut pas dépasser 100 caractères')
+    .regex(/^[a-zA-ZÀ-ÿ\s'-]+$/, 'Le nom contient des caractères invalides'),
+  organizationName: z.string()
+    .trim()
+    .min(2, 'Le nom de l\'organisation doit contenir au moins 2 caractères')
+    .max(200, 'Le nom de l\'organisation ne peut pas dépasser 200 caractères')
+    .regex(/^[a-zA-ZÀ-ÿ0-9\s.,'&-]+$/, 'Le nom de l\'organisation contient des caractères invalides'),
+  email: z.string()
+    .trim()
+    .email('Email invalide')
+    .max(255, 'L\'email ne peut pas dépasser 255 caractères')
+    .toLowerCase(),
+  password: z.string()
+    .min(8, 'Le mot de passe doit contenir au moins 8 caractères')
+    .max(100, 'Le mot de passe ne peut pas dépasser 100 caractères')
+    .regex(/[A-Z]/, 'Le mot de passe doit contenir au moins une majuscule')
+    .regex(/[a-z]/, 'Le mot de passe doit contenir au moins une minuscule')
+    .regex(/[0-9]/, 'Le mot de passe doit contenir au moins un chiffre'),
+  organizationCategory: z.enum(['hopital', 'clinique', 'pharmacie', 'particulier'], {
+    errorMap: () => ({ message: 'Type d\'organisation invalide' })
+  })
+});
+
+const loginSchema = z.object({
+  email: z.string()
+    .trim()
+    .email('Email invalide')
+    .max(255, 'L\'email ne peut pas dépasser 255 caractères')
+    .toLowerCase(),
+  password: z.string()
+    .min(1, 'Le mot de passe est requis')
+});
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -20,11 +59,22 @@ const Auth = () => {
     e.preventDefault();
     setIsLoading(true);
     const formData = new FormData(e.currentTarget);
-    const email = formData.get('signup-email') as string;
-    const password = formData.get('signup-password') as string;
-    const fullName = formData.get('full-name') as string;
-    const organizationName = formData.get('organization-name') as string;
+    const rawEmail = formData.get('signup-email') as string;
+    const rawPassword = formData.get('signup-password') as string;
+    const rawFullName = formData.get('full-name') as string;
+    const rawOrganizationName = formData.get('organization-name') as string;
+    
     try {
+      // Validate inputs with zod before any database operations
+      const validatedData = signupSchema.parse({
+        fullName: rawFullName,
+        organizationName: rawOrganizationName,
+        email: rawEmail,
+        password: rawPassword,
+        organizationCategory: organizationCategory
+      });
+      
+      const { email, password, fullName, organizationName } = validatedData;
       // First, create the organization (allowed by RLS policy for anyone)
       const {
         data: orgData,
@@ -79,11 +129,21 @@ const Auth = () => {
         bubbles: true
       }));
     } catch (error: any) {
-      toast({
-        title: 'Erreur',
-        description: error.message || 'Une erreur est survenue lors de l\'inscription.',
-        variant: 'destructive'
-      });
+      // Handle zod validation errors
+      if (error instanceof z.ZodError) {
+        const firstError = error.errors[0];
+        toast({
+          title: 'Validation échouée',
+          description: firstError.message,
+          variant: 'destructive'
+        });
+      } else {
+        toast({
+          title: 'Erreur',
+          description: error.message || 'Une erreur est survenue lors de l\'inscription.',
+          variant: 'destructive'
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -92,14 +152,19 @@ const Auth = () => {
     e.preventDefault();
     setIsLoading(true);
     const formData = new FormData(e.currentTarget);
-    const email = formData.get('login-email') as string;
-    const password = formData.get('login-password') as string;
+    const rawEmail = formData.get('login-email') as string;
+    const rawPassword = formData.get('login-password') as string;
+    
     try {
-      const {
-        error
-      } = await supabase.auth.signInWithPassword({
-        email,
-        password
+      // Validate login inputs
+      const validatedData = loginSchema.parse({
+        email: rawEmail,
+        password: rawPassword
+      });
+      
+      const { error } = await supabase.auth.signInWithPassword({
+        email: validatedData.email,
+        password: validatedData.password
       });
       if (error) throw error;
       toast({
@@ -108,11 +173,21 @@ const Auth = () => {
       });
       navigate('/');
     } catch (error: any) {
-      toast({
-        title: 'Erreur',
-        description: error.message || 'Email ou mot de passe incorrect.',
-        variant: 'destructive'
-      });
+      // Handle zod validation errors
+      if (error instanceof z.ZodError) {
+        const firstError = error.errors[0];
+        toast({
+          title: 'Validation échouée',
+          description: firstError.message,
+          variant: 'destructive'
+        });
+      } else {
+        toast({
+          title: 'Erreur',
+          description: error.message || 'Email ou mot de passe incorrect.',
+          variant: 'destructive'
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -181,7 +256,10 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Mot de passe</Label>
-                  <Input id="signup-password" name="signup-password" type="password" required minLength={6} />
+                  <Input id="signup-password" name="signup-password" type="password" required minLength={8} />
+                  <p className="text-xs text-muted-foreground">
+                    Minimum 8 caractères avec majuscule, minuscule et chiffre
+                  </p>
                 </div>
                 <Button type="submit" disabled={isLoading} className="w-full text-2xl">
                   {isLoading ? 'Création...' : 'Créer un compte'}
