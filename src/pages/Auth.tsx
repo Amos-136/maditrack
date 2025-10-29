@@ -28,22 +28,7 @@ const Auth = () => {
     const organizationName = formData.get('organization-name') as string;
 
     try {
-      // First, sign up the user
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            full_name: fullName
-          }
-        }
-      });
-
-      if (error) throw error;
-      if (!data.user) throw new Error('Erreur lors de la création du compte');
-
-      // Then create the organization with the user's ID
+      // First, create the organization (allowed by RLS policy for anyone)
       const { data: orgData, error: orgError } = await supabase
         .from('organizations')
         .insert({
@@ -56,13 +41,25 @@ const Auth = () => {
 
       if (orgError) throw orgError;
 
-      // Update user profile with organization_id
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ organization_id: orgData.id })
-        .eq('id', data.user.id);
+      // Then sign up the user with organization_id in metadata
+      // The handle_new_user trigger will create the profile with this organization_id
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            full_name: fullName,
+            organization_id: orgData.id
+          }
+        }
+      });
 
-      if (profileError) throw profileError;
+      if (error) throw error;
+      if (!data.user) throw new Error('Erreur lors de la création du compte');
+
+      // Wait a moment for the trigger to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Assign admin role to the first user
       const { error: roleError } = await supabase
