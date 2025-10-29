@@ -9,48 +9,45 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Building2 } from 'lucide-react';
-
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   const [organizationCategory, setOrganizationCategory] = useState('hopital');
-
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-
     const formData = new FormData(e.currentTarget);
     const email = formData.get('signup-email') as string;
     const password = formData.get('signup-password') as string;
     const fullName = formData.get('full-name') as string;
     const organizationName = formData.get('organization-name') as string;
-
     try {
       // First, create the organization (allowed by RLS policy for anyone)
-      const { data: orgData, error: orgError } = await supabase
-        .from('organizations')
-        .insert({
-          name: organizationName,
-          type: 'clinique_privee',
-          category: organizationCategory as any
-        } as any)
-        .select()
-        .single();
-
+      const {
+        data: orgData,
+        error: orgError
+      } = await supabase.from('organizations').insert({
+        name: organizationName,
+        type: 'clinique_privee',
+        category: organizationCategory as any
+      } as any).select().single();
       if (orgError) {
         console.error('Erreur création organisation:', orgError);
         throw new Error(`Impossible de créer l'organisation: ${orgError.message}`);
       }
-
       if (!orgData?.id) {
         throw new Error('L\'organisation a été créée mais aucun ID n\'a été retourné');
       }
 
       // Then sign up the user with organization_id in metadata
       // The handle_new_user trigger will create the profile with this organization_id
-      const { data, error } = await supabase.auth.signUp({
+      const {
+        data,
+        error
+      } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -61,12 +58,10 @@ const Auth = () => {
           }
         }
       });
-
       if (error) {
         console.error('Erreur création utilisateur:', error);
         throw new Error(`Impossible de créer le compte: ${error.message}`);
       }
-      
       if (!data.user) {
         throw new Error('Erreur lors de la création du compte: aucun utilisateur retourné');
       }
@@ -75,75 +70,69 @@ const Auth = () => {
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // Assign admin role to the first user
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: data.user.id,
-          role: 'admin'
-        });
-
+      const {
+        error: roleError
+      } = await supabase.from('user_roles').insert({
+        user_id: data.user.id,
+        role: 'admin'
+      });
       if (roleError) {
         console.error('Erreur attribution rôle admin:', roleError);
         throw new Error(`Compte créé mais impossible d'attribuer le rôle admin: ${roleError.message}`);
       }
-
       toast({
         title: 'Compte créé !',
-        description: 'Vous pouvez maintenant vous connecter.',
+        description: 'Vous pouvez maintenant vous connecter.'
       });
 
       // Switch to login tab
-      document.querySelector('[value="login"]')?.dispatchEvent(new Event('click', { bubbles: true }));
+      document.querySelector('[value="login"]')?.dispatchEvent(new Event('click', {
+        bubbles: true
+      }));
     } catch (error: any) {
       toast({
         title: 'Erreur',
         description: error.message || 'Une erreur est survenue lors de l\'inscription.',
-        variant: 'destructive',
+        variant: 'destructive'
       });
     } finally {
       setIsLoading(false);
     }
   };
-
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-
     const formData = new FormData(e.currentTarget);
     const email = formData.get('login-email') as string;
     const password = formData.get('login-password') as string;
-
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const {
+        error
+      } = await supabase.auth.signInWithPassword({
         email,
-        password,
+        password
       });
-
       if (error) throw error;
-
       toast({
         title: 'Connexion réussie !',
-        description: 'Vous êtes maintenant connecté.',
+        description: 'Vous êtes maintenant connecté.'
       });
-
       navigate('/');
     } catch (error: any) {
       toast({
         title: 'Erreur',
         description: error.message || 'Email ou mot de passe incorrect.',
-        variant: 'destructive',
+        variant: 'destructive'
       });
     } finally {
       setIsLoading(false);
     }
   };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
+  return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <div className="h-16 w-16 rounded-full bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center shadow-lg">
+            <div className="h-16 w-16 bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center shadow-lg rounded-full bg-slate-600">
               <Building2 className="h-8 w-8 text-white" />
             </div>
           </div>
@@ -161,24 +150,13 @@ const Auth = () => {
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="login-email">Email</Label>
-                  <Input
-                    id="login-email"
-                    name="login-email"
-                    type="email"
-                    placeholder="vous@exemple.com"
-                    required
-                  />
+                  <Input id="login-email" name="login-email" type="email" placeholder="vous@exemple.com" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="login-password">Mot de passe</Label>
-                  <Input
-                    id="login-password"
-                    name="login-password"
-                    type="password"
-                    required
-                  />
+                  <Input id="login-password" name="login-password" type="password" required />
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button type="submit" disabled={isLoading} className="w-full text-3xl">
                   {isLoading ? 'Connexion...' : 'Se connecter'}
                 </Button>
               </form>
@@ -188,23 +166,11 @@ const Auth = () => {
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="full-name">Nom complet</Label>
-                  <Input
-                    id="full-name"
-                    name="full-name"
-                    type="text"
-                    placeholder="Dr. Jean Dupont"
-                    required
-                  />
+                  <Input id="full-name" name="full-name" type="text" placeholder="Dr. Jean Dupont" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="organization-name">Nom de l'organisation</Label>
-                  <Input
-                    id="organization-name"
-                    name="organization-name"
-                    type="text"
-                    placeholder="Clinique Santé Plus"
-                    required
-                  />
+                  <Input id="organization-name" name="organization-name" type="text" placeholder="Clinique Santé Plus" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="organization-category">Type d'entité</Label>
@@ -222,25 +188,13 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    name="signup-email"
-                    type="email"
-                    placeholder="vous@exemple.com"
-                    required
-                  />
+                  <Input id="signup-email" name="signup-email" type="email" placeholder="vous@exemple.com" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Mot de passe</Label>
-                  <Input
-                    id="signup-password"
-                    name="signup-password"
-                    type="password"
-                    required
-                    minLength={6}
-                  />
+                  <Input id="signup-password" name="signup-password" type="password" required minLength={6} />
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button type="submit" disabled={isLoading} className="w-full text-2xl">
                   {isLoading ? 'Création...' : 'Créer un compte'}
                 </Button>
               </form>
@@ -248,8 +202,6 @@ const Auth = () => {
           </Tabs>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };
-
 export default Auth;
