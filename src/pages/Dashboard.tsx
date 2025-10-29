@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Users, Calendar, Activity, TrendingUp } from 'lucide-react';
+import { Users, Calendar, Activity, TrendingUp, UserPlus, CalendarPlus, UserCog } from 'lucide-react';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface Patient {
   id: string;
@@ -27,6 +29,7 @@ const Dashboard = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
   const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
@@ -68,9 +71,25 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in-50 duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Tableau de bord</h1>
-        <p className="text-muted-foreground mt-1">Vue d'ensemble de votre établissement</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Tableau de bord</h1>
+          <p className="text-muted-foreground mt-1">Vue d'ensemble de votre établissement</p>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={() => navigate('/patients')} className="gap-2">
+            <UserPlus className="h-4 w-4" />
+            Nouveau patient
+          </Button>
+          <Button onClick={() => navigate('/appointments')} className="gap-2">
+            <CalendarPlus className="h-4 w-4" />
+            Nouveau rendez-vous
+          </Button>
+          <Button onClick={() => navigate('/staff')} className="gap-2">
+            <UserCog className="h-4 w-4" />
+            Ajouter un membre
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -79,23 +98,27 @@ const Dashboard = () => {
           value={patients.length}
           icon={Users}
           trend={{ value: '+12% ce mois', positive: true }}
+          href="/patients"
         />
         <StatsCard
           title="Rendez-vous du jour"
           value={todayAppointments.length}
           icon={Calendar}
           trend={{ value: '3 en attente', positive: true }}
+          href="/appointments"
         />
         <StatsCard
           title="Médecins actifs"
           value={8}
           icon={Activity}
+          href="/staff"
         />
         <StatsCard
           title="Taux d'occupation"
           value="87%"
           icon={TrendingUp}
           trend={{ value: '+5% vs hier', positive: true }}
+          href="/dashboard"
         />
       </div>
 
