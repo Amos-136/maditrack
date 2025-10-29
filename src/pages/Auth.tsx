@@ -65,7 +65,7 @@ const Auth = () => {
     const rawOrganizationName = formData.get('organization-name') as string;
     
     try {
-      // Validate inputs with zod before any database operations
+      // Validate inputs with zod before any operations
       const validatedData = signupSchema.parse({
         fullName: rawFullName,
         organizationName: rawOrganizationName,
@@ -74,51 +74,30 @@ const Auth = () => {
         organizationCategory: organizationCategory
       });
       
-      const { email, password, fullName, organizationName } = validatedData;
-      // First, create the organization (allowed by RLS policy for anyone)
-      const {
-        data: orgData,
-        error: orgError
-      } = await supabase.from('organizations').insert({
-        name: organizationName,
-        type: 'clinique_privee',
-        category: organizationCategory as any
-      } as any).select().single();
-      if (orgError) {
-        console.error('Erreur création organisation:', orgError);
-        throw new Error(`Impossible de créer l'organisation: ${orgError.message}`);
-      }
-      if (!orgData?.id) {
-        throw new Error('L\'organisation a été créée mais aucun ID n\'a été retourné');
-      }
-
-      // Then sign up the user with organization_id in metadata
-      // The handle_new_user trigger will create the profile with this organization_id
-      const {
-        data,
-        error
-      } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            full_name: fullName,
-            organization_id: orgData.id
-          }
+      // Call secure edge function that handles both organization and user creation
+      const { data, error } = await supabase.functions.invoke('signup', {
+        body: {
+          fullName: validatedData.fullName,
+          organizationName: validatedData.organizationName,
+          email: validatedData.email,
+          password: validatedData.password,
+          organizationCategory: validatedData.organizationCategory
         }
       });
+
       if (error) {
-        console.error('Erreur création utilisateur:', error);
-        throw new Error(`Impossible de créer le compte: ${error.message}`);
-      }
-      if (!data.user) {
-        throw new Error('Erreur lors de la création du compte: aucun utilisateur retourné');
+        console.error('Signup error:', error);
+        throw new Error(error.message || 'Erreur lors de l\'inscription');
       }
 
-      // Wait for the trigger to complete and create the profile + assign admin role
-      // The database trigger automatically assigns the admin role
-      await new Promise(resolve => setTimeout(resolve, 500));
+      if (data?.error) {
+        // Handle validation or other errors from edge function
+        if (Array.isArray(data.details)) {
+          throw new Error(data.details.join(', '));
+        }
+        throw new Error(data.error);
+      }
+
       toast({
         title: 'Compte créé !',
         description: 'Vous pouvez maintenant vous connecter.'
