@@ -66,20 +66,9 @@ const Auth = () => {
         throw new Error('Erreur lors de la création du compte: aucun utilisateur retourné');
       }
 
-      // Wait for the trigger to complete and create the profile
+      // Wait for the trigger to complete and create the profile + assign admin role
+      // The database trigger automatically assigns the admin role
       await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Assign admin role to the first user
-      const {
-        error: roleError
-      } = await supabase.from('user_roles').insert({
-        user_id: data.user.id,
-        role: 'admin'
-      });
-      if (roleError) {
-        console.error('Erreur attribution rôle admin:', roleError);
-        throw new Error(`Compte créé mais impossible d'attribuer le rôle admin: ${roleError.message}`);
-      }
       toast({
         title: 'Compte créé !',
         description: 'Vous pouvez maintenant vous connecter.'
