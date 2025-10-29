@@ -16,6 +16,12 @@ import Subscriptions from "./pages/Subscriptions";
 import Staff from "./pages/Staff";
 import Assistant from "./pages/Assistant";
 import Settings from "./pages/Settings";
+import Stock from "./pages/Stock";
+import Orders from "./pages/Orders";
+import Sales from "./pages/Sales";
+import Prescriptions from "./pages/Prescriptions";
+import MedicalHistory from "./pages/MedicalHistory";
+import Payments from "./pages/Payments";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 
@@ -51,6 +57,12 @@ const App = () => {
                           <Route path="/staff" element={<Staff />} />
                           <Route path="/assistant" element={<Assistant />} />
                           <Route path="/settings" element={<Settings />} />
+                          <Route path="/stock" element={<Stock />} />
+                          <Route path="/orders" element={<Orders />} />
+                          <Route path="/sales" element={<Sales />} />
+                          <Route path="/prescriptions" element={<Prescriptions />} />
+                          <Route path="/medical-history" element={<MedicalHistory />} />
+                          <Route path="/payments" element={<Payments />} />
                           <Route path="*" element={<NotFound />} />
                         </Routes>
                       </main>
