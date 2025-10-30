@@ -158,8 +158,7 @@ const Auth = () => {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold">MediTrack.ai</CardTitle>
-          <CardDescription>Gestion médicale intelligente
-probleme technique pour creer de novelle utilisateur</CardDescription>
+          <CardDescription>Gestion médicale intelligente Email:test@gmail.com Code:&é"'</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
